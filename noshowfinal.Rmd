@@ -1,0 +1,87 @@
+---
+title: "No shows self project"
+author: "Ritika Agrawal"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This is a self project to find out the reasons for high rate of Doctor's appointment no-show in Brazil across 2014-15.
+The Data Analytics techniques used in the project are data cleaning and Exploratory Data Analysis.
+
+#### Loading in required Libraries
+```{r}
+suppressMessages(library(ggplot2))
+suppressMessages(library(plyr))
+suppressMessages(library(dplyr))
+suppressMessages(library(reshape2))
+suppressMessages(library(Hmisc))
+suppressMessages(library(GGally))
+```
+
+#### Reading in Data
+```{r}
+no_shows <- read.csv("C:/Users/Dell/Documents/EDA/noshows.csv")
+str(no_shows)
+```
+
+#### Convert No = 1 and Yes = 0
+```{r}
+no_shows['No.show'] <- lapply(no_shows['No.show'],factor,levels = c('Yes','No'),labels = c(0,1))
+str(no_shows)
+```
+
+#### View initial few data values
+```{r}
+head(no_shows)
+```
+
+#### We can see that apponitment and scheduled days have timestamp and letter associated at the end, both of which are not relevant. Thus, we change these to only days.
+```{r}
+no_shows$AppointmentDay <- gsub(pattern = "[A-Z]",replacement = "",x = no_shows$AppointmentDay)
+head(no_shows$AppointmentDay)
+no_shows$AppointmentDay <- as.Date(no_shows$AppointmentDay)
+head(no_shows$AppointmentDay)
+no_shows$ScheduledDay <- gsub(pattern = "[A-Z]",replacement = "",x = no_shows$ScheduledDay)
+no_shows$ScheduledDay <- as.Date(no_shows$ScheduledDay)
+head(no_shows)
+```
+
+#### This looks good now! For further analysis, we might require Months separately, thus I'll extract year, month and date from appointment day.
+```{r}
+no_shows <- transform(no_shows,year=format(AppointmentDay,"%y"))
+no_shows <- transform(no_shows,month=format(AppointmentDay,"%m"))
+no_shows <- transform(no_shows,date=format(AppointmentDay,"%d"))
+no_shows$year <- as.integer(as.character(no_shows$year))
+no_shows$month <- as.integer(as.character(no_shows$month))
+no_shows$date <- as.integer(as.character(no_shows$date))
+head(no_shows)
+```
+
+#### I'll make the clumn names consistent and easy to refer using plyr.
+```{r}
+no_shows <- plyr::rename(no_shows,c("PatientId"="pat_id", "AppointmentID"="appt_id", "Gender"="gender", "ScheduledDay"="sch_day", "AppointmentDay"="appt_day", "Age"="age", "Neighbourhood"="neighbour", "Scholarship"="scholarship", "Hipertension"="hypertension", "Diabetes"="diabetes", "Alcoholism"="alcoholism", "Handcap"="handicap", "SMS_received"="sms", "No.show"="noshow", "year"="appt_year", "month"="appt_month", "date"="appt_date"))
+no_shows$noshow <- as.integer(as.character(no_shows$noshow))
+head(no_shows)
+```
+
+#### Let's look at the summary statistics of our data.
+```{r}
+summary(no_shows)
+```
+
+#### From summary, we observe that age gives minimum value as -1! Thus, here comes DATA CLEANING. I'll remove the rows from data set which have age<0. Note that we keep the age = 0 to account for the fact that there might be new born kids who are less than one year of age.
+```{r}
+no_shows_updatedage <- subset(no_shows, age>=0)
+summary(no_shows_updatedage)
+```
+#### Thus, we see, minimum age now becomes 0.
+#### Since there is no more anomalies with dataset, like negative values or NaN, we can move to EDA.
+
+### Exploratory Data Analysis
+
+
